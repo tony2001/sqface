@@ -25,6 +25,7 @@ First published on December 6, 2001.
 Licensed under AGPL 3.0
 
 (At the moment) this project makes use of files licensed under the MIT license (see below):
+
 * rapidxml.hpp
 * rapidxml_iterators.hpp
 * rapidxml_print.hpp
