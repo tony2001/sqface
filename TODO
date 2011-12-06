@@ -1,0 +1,4 @@
+1) use autotools instead of a hand-written .sh file
+2) make this code a library with an example binary
+3) ...
+4) PROFIT!
