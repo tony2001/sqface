@@ -17,15 +17,15 @@ OpenCV outperforms this code about 6-7 times over, but it also has a huge codeba
 Credits and licensing
 ---------------------
 
-Author: Alexander Lubyagin, lubyagin [at] yandex dot ru
-First published on December 6, 2001.
-Licensed under AGPL 3.0
+|Author: Alexander Lubyagin, lubyagin [at] yandex dot ru
+|First published on December 6, 2001.
+|Licensed under AGPL 3.0
 
 (At the moment) this project makes use of files licensed under MIT license:
-rapidxml.hpp
-rapidxml_iterators.hpp
-rapidxml_print.hpp
-rapidxml_utils.hpp
+| rapidxml.hpp
+| rapidxml_iterators.hpp
+| rapidxml_print.hpp
+| rapidxml_utils.hpp
 
 Use of this software is granted under one of the following two licenses,
 to be chosen freely by the user.
