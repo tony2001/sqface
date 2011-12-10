@@ -96,6 +96,7 @@ else
   AC_MSG_RESULT([$FREEIMAGE_DIR])
   LDFLAGS="$LDFLAGS -L$FREEIMAGE_DIR/$LIBDIR"
   CFLAGS="$CFLAGS -I$FREEIMAGE_DIR/include"
+  CXXFLAGS="$CXXFLAGS -I$FREEIMAGE_DIR/include"
   LIBS="$LIBS -lfreeimage"
 
   AC_CHECK_LIB([freeimage], [FreeImage_Load], [], [
@@ -124,12 +125,15 @@ if test x"$debug" = xyes ; then
 
   if test x"$GCC" = xyes; then
 
-    dnl Remove any optimization flags from CFLAGS
+    dnl Remove any optimization flags from CFLAGS and CXXFLAGS
     changequote({,})
     CFLAGS=`echo "$CFLAGS" | sed -e 's/-O[0-9s]*//g'`
     CFLAGS=`echo "$CFLAGS" | sed -e 's/-g[0-2]\? //g'`
+    CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/-O[0-9s]*//g'`
+    CXXFLAGS=`echo "$CXXFLAGS" | sed -e 's/-g[0-2]\? //g'`
     changequote([,])
     CFLAGS="$CFLAGS -g3 -Wall -O0"
+    CXXFLAGS="$CXXFLAGS -g3 -Wall -O0"
 
   fi
 
