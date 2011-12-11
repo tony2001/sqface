@@ -1,7 +1,7 @@
 
 #include <FreeImage.h>
 #include <stdio.h>  // printf,perror
-#include <stdlib.h> // abs,exit
+#include <stdlib.h> // abs
 #include <time.h>   // clock
 #include <string.h> // strncmp
 #include <math.h>   // floor

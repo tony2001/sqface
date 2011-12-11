@@ -36,6 +36,9 @@
 #include "rapidxml.hpp"
 #include "rapidxml_print.hpp"
 
+using namespace std;
+using namespace rapidxml;
+
 #include "sqface.h"
 #include "sqface_version.h"
 #include "sqface_config.h"
@@ -149,23 +152,68 @@ inline float TFaceRecognizer::g_sum2(int x_s, int y_s, int w_r_scaled, int h_r_s
 }
 /* }}} */
 
-// Конструктор
-TFaceRecognizer::TFaceRecognizer() {
-	FreeImage_Initialise(1);
+void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) /* {{{ */
+{
+	sqface_debug("%s", message);
 }
+/* }}} */
+
+// Конструктор
+TFaceRecognizer::TFaceRecognizer() /* {{{ */
+{
+	FreeImage_Initialise(1);
+	FreeImage_SetOutputMessage(FreeImageErrorHandler);
+}
+/* }}} */
 
 // Деструктор
-TFaceRecognizer::~TFaceRecognizer() {
+TFaceRecognizer::~TFaceRecognizer() /* {{{ */
+{
   UnloadImage(); // на всякий случай
   FreeImage_DeInitialise();
 }
+/* }}} */
 
 // Загрузить изображение, и пред-обработать
 int TFaceRecognizer::LoadImage(const char *filename_i) /* {{{ */
 {
+	FREE_IMAGE_FORMAT fif;
+
+	fif = FreeImage_GetFIFFromFilename(filename_i);
+	if (fif == FIF_UNKNOWN) {
+		sqface_debug("failed to read file signature from '%s'\n", filename_i);
+		return -1;
+	}
+
+	if (!FreeImage_FIFSupportsReading(fif)) {
+		sqface_debug("FreeImage library cannot read this type of files '%s'\n", filename_i);
+		return -1;
+	}
+
 	// Оригинальное "цветное" изображение
 	// , увеличить
-	dib0 = FreeImage_Load(FreeImage_GetFIFFromFilename(filename_i), filename_i, JPEG_ACCURATE);
+	dib0 = FreeImage_Load(fif, filename_i, JPEG_ACCURATE);
+
+	if (!dib0) {
+		sqface_debug("failed to load '%s'\n", filename_i);
+		return -1;
+	}
+
+	w0 = FreeImage_GetWidth(dib0);
+	h0 = FreeImage_GetHeight(dib0);
+	p0 = FreeImage_GetBits(dib0);
+	bpp0 = FreeImage_GetBPP(dib0);
+	bypp0 = bpp0/8;
+	stride0 = FreeImage_GetPitch(dib0); // что такое Pitch?
+
+	// Оригинальное "цветное" изображение
+	// , увеличить
+	dib0 = FreeImage_Load(fif, filename_i, JPEG_ACCURATE);
+
+	if (!dib0) {
+		sqface_debug("failed to load '%s'\n", filename_i);
+		return -1;
+	}
 
 	w0 = FreeImage_GetWidth(dib0);
 	h0 = FreeImage_GetHeight(dib0);
@@ -194,8 +242,8 @@ int TFaceRecognizer::LoadImage(const char *filename_i) /* {{{ */
 	stride2 = w2*bypp2; // unaligned
 	p2 = (SUM_TYPE *)malloc(h2*stride2); // в байтах, (h2 x w2)
 	if(!p2) {
-		perror("No free memory.\n");
-		exit(-1);
+		sqface_debug("No free memory.\n");
+		return -1;
 	}
 
 	// "Интегральная" матрица
@@ -206,8 +254,8 @@ int TFaceRecognizer::LoadImage(const char *filename_i) /* {{{ */
 	stride3 = w3*bypp3; // unaligned
 	p3 = (SUM_TYPE2 *)malloc(h3*stride3); // в байтах, (h3 x w3)
 	if(!p3) {
-		perror("No free memory.\n");
-		exit(-1);
+		sqface_debug("No free memory.\n");
+		return -1;
 	}
 
 	// Посчитать интегральное изображение
@@ -289,16 +337,20 @@ int TFaceRecognizer::LoadImage(const char *filename_i) /* {{{ */
 }
 /* }}} */
 
-using namespace std;
-using namespace rapidxml;
-
 int TFaceRecognizer::LoadCascadeXML(const char *filename_i_txt) /* {{{ */
 {
 	// Read file
 	ifstream f(filename_i_txt);
 	string xml;
 	string line;
+
+	if (f.fail()) {
+		sqface_debug("failed to open cascade XML file '%s'\n", filename_i_txt);
+		return -1;
+	}
+
 	while (getline(f,line)) xml += line;
+
 	std::vector<char> xml_copy(xml.begin(), xml.end());
 	xml_copy.push_back('\0');
 
@@ -454,10 +506,26 @@ int TFaceRecognizer::LoadCascadeXML(const char *filename_i_txt) /* {{{ */
 // Записать изображение
 int TFaceRecognizer::SaveImage(const char *filename_o) /* {{{ */
 {
+	FREE_IMAGE_FORMAT fif;
 	//  FreeImage_FlipVertical(dib1);
 	sqface_debug("Save: %s\n", filename_o);
 	sqface_debug("w = %d\n", FreeImage_GetWidth(dib0));
-	FreeImage_Save(FreeImage_GetFIFFromFilename(filename_o), dib0, filename_o, 0);
+
+	fif = FreeImage_GetFIFFromFilename(filename_o);
+	if (fif == FIF_UNKNOWN) {
+		sqface_debug("failed to detect file format from filename '%s'\n", filename_o);
+		return -1;
+	}
+
+	if (!FreeImage_FIFSupportsWriting(fif)) {
+		sqface_debug("FreeImage library cannot write this type of files '%s'\n", filename_o);
+		return -1;
+	}
+
+	if (!FreeImage_Save(FreeImage_GetFIFFromFilename(filename_o), dib0, filename_o, 0)) {
+		sqface_debug("failed to save result picture into '%s'\n", filename_o);
+		return -1;
+	}
 	return 0;
 }
 /* }}} */
@@ -465,17 +533,36 @@ int TFaceRecognizer::SaveImage(const char *filename_o) /* {{{ */
 // Выгрузить изображение
 int TFaceRecognizer::UnloadImage() /* {{{ */
 {
-	free(p2);
-	free(p3);
-	FreeImage_Unload(dib0);
-	FreeImage_Unload(dibo);
-	FreeImage_Unload(dib1);
+	if (p2) {
+		free(p2);
+		p2 = NULL;
+	}
+	
+	if (p3) {
+		free(p3);
+		p3 = NULL;
+	}
+
+	if (dib0) {
+		FreeImage_Unload(dib0);
+		dib0 = NULL;
+	}
+
+	if (dibo) {
+		FreeImage_Unload(dibo);
+		dibo = NULL;
+	}
+
+	if (dib1) {
+		FreeImage_Unload(dib1);
+		dib1 = NULL;
+	}
 	return 0;
 }
 /* }}} */
 
 // Распознать лица
-int TFaceRecognizer::Recognize(float factor)
+int TFaceRecognizer::Recognize(float factor) /* {{{ */
 {
 	for (int i_stage = 0; i_stage < cascade.n_stages; i_stage++) {
 		sqface_debug("stage %d: %d rects\n", i_stage+1, this->stages[i_stage].n_rects);
@@ -494,6 +581,12 @@ int TFaceRecognizer::Recognize(float factor)
 	unsigned long long count_rect_total = 0;
 	unsigned long long count_rect_total_used = 0;
 	int i_face = 1;
+
+	if (cascade.n_stages == 0) {
+		sqface_debug("invalid or no cascade XML loaded\n");
+		return -1;
+	}
+
 	do {
 		unsigned long long count_rect = 0;
 		for(int k = 0; k < MAX_W; k++) a_ds[k] = (int)floor(k*dscale);
@@ -602,12 +695,17 @@ int TFaceRecognizer::Recognize(float factor)
 	sqface_debug("%.4f seconds\n", (t2-t1)/(double)(CLOCKS_PER_SEC));
 	return 0;
 }
+/* }}} */
 
-int TFaceRecognizer::GetImageWidth() {
+int TFaceRecognizer::GetImageWidth() /* {{{ */
+{
 	return this->w0;
 }
+/* }}} */
 
-int TFaceRecognizer::GetImageHeight() {
+int TFaceRecognizer::GetImageHeight() /* {{{ */
+{
 	return this->h0;
 }
+/* }}} */
 
