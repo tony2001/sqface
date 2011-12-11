@@ -5,6 +5,7 @@ lib_LTLIBRARIES = libsqface.la
 libsqface_la_SOURCES = sqface.cpp
 
 libsqface_la_LIBADD = @LTLIBOBJS@
+libsqface_la_CXXFLAGS = -I@abs_top_srcdir@/rapidxml
 libsqface_la_LDFLAGS = -release @VERSION@
 
 include_HEADERS = sqface.h sqface_version.h
