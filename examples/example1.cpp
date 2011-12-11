@@ -29,5 +29,7 @@ int main (int argc, char **argv) {
 	Rec->SaveImage(filename_o);
 	Rec->UnloadImage();
 
+	delete Rec;
+
 	return 0;
 }
