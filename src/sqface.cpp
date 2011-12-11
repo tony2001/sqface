@@ -335,16 +335,16 @@ int TFaceRecognizer::LoadCascadeXML(const char *filename_i_txt) /* {{{ */
 
 		xml_node<> *node9 = node5->first_node("stage_threshold");
 		if(!node9) {return -1;}
-		sqface_debug("stage_threshold %f\n", node9->value());
+		sqface_debug("stage_threshold %s\n", node9->value());
 		float stage_threshold = atof(node9->value());
 
 		xml_node<> *node10 = node5->first_node("parent");
 		if(!node10) {return -1;}
-		sqface_debug("parent %d\n", node10->value());
+		sqface_debug("parent %s\n", node10->value());
 
 		xml_node<> *node11 = node5->first_node("next");
 		if(!node11) {return -1;}
-		sqface_debug("next %d\n", node11->value());
+		sqface_debug("next %s\n", node11->value());
 
 		this->stages[i_stage].n_features = 0;
 		this->stages[i_stage].n_rects = 0;
