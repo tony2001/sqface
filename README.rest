@@ -20,7 +20,7 @@ Credits and licensing
 
 Author: Alexander Lubyagin, lubyagin [at] yandex dot ru
 
-First published on December 6, 2001.
+First published on December 6, 2011.
 
 Licensed under AGPL 3.0
 
